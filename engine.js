@@ -20,7 +20,8 @@ module.exports = {
   colors: [ 'red', 'green', 'pink', 'yellow', 'cyan', 'white', 'orange' ],
   gameInput: function(index, strMessage){
 	  //if not locked
-	  if (this.avatar[index].mode !== 2){
+	  
+	  if (this.avatar[index] !== undefined && this.avatar[index].mode !== 2){
 	  			this.avatar[index].mode = 1;
 				switch (strMessage) {
 					case "a_left": 
@@ -319,8 +320,8 @@ module.exports = {
 								var msgObj = this.spawn.Message(this.clients[currClient].userName, 
 																"#ff3f3f", 
 																"-5", 
-																this.avatar[this.clients[currClient].entityindex].xpos, 
-																this.avatar[this.clients[currClient].entityindex].ypos);
+																this.avatar[i].xpos, 
+																this.avatar[i].ypos);
 																
 								this.messageStack.push(JSON.stringify({ type:'message', data:msgObj }));
 		
@@ -329,7 +330,7 @@ module.exports = {
 								if (typeof this.clients[currClient] !== "undefined"){
 									this.clients[currClient].score += 10;
 									this.clients[currClient].sendUTF(JSON.stringify({ type:'score', data: this.clients[currClient].score }));
-									var msgObj = this.spawn.Message(this.clients[currClient].userName, "#fff43f", "+10", this.avatar[this.clients[currClient].entityindex].xpos, this.avatar[this.clients[currClient].entityindex].ypos);
+									var msgObj = this.spawn.Message(this.clients[currClient].userName, "#fff43f", "+10", this.avatar[i].xpos, this.avatar[i].ypos);
 									this.messageStack.push(JSON.stringify({ type:'message', data:msgObj }));
 								}
 								this.missile[collision].score = 1;

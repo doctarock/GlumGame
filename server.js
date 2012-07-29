@@ -32,87 +32,89 @@ var wsServer = new game.webSocketServer({
 // tries to connect to the WebSocket server
 wsServer.on('request', function(request) {
     console.log((new Date()) + ' Connection from origin ' + request.origin + '.');
-
+	
     // accept connection - you should check 'request.origin' to make sure that
     // client is connecting from your website
     // (http://en.wikipedia.org/wiki/Same_origin_policy)
-    var connection = request.accept(null, request.origin);
-    // we need to know client index to remove them on 'close' event
-    var index = game.clients.push(connection) - 1;
-	var entityindex;
-    var userName = false;
-    var userColor = false;
-
-    console.log((new Date()) + ' Connection accepted.');
-    // send back chat history
-    if (game.history.length > 0) {
-        connection.sendUTF(JSON.stringify( { type: 'history', data: game.history} ));
-    }
-
-    // user sent some message
-    connection.on('message', function(message) {
-        if (message.type === 'utf8') { // accept only text
-			var strMessage = game.htmlEntities(message.utf8Data)
-            if (userName === false) { // first message sent by user is their name
-                // remember user name
-                userName = strMessage;
-                userColor = game.colors.shift();
-				
-                connection.sendUTF(JSON.stringify({ type:'color', data: userColor }));
-                console.log('#### User is known as: ' + userName + ' with ' + userColor + ' color.');
-
-				//add glum and move it to position
-				var entityobj = game.spawn.Glum(userName, userColor, index);
-				game.ai.Glum(entityobj);
-				game.messageStack.push(JSON.stringify({ type:'sound', data: 9 }));
-				
-				this.entityindex = game.avatar.push(entityobj) - 1;
-				this.score = 0;
-				
-			} else if (strMessage === "restart" && userName !== false) {
-
-				//add glum and move it to position
-				var entityobj = game.spawn.Glum(userName, userColor, index);
-				game.ai.Glum(entityobj);
-				this.entityindex = game.avatar.push(entityobj) - 1;
-				this.score = 0;
-				
-                connection.sendUTF(JSON.stringify({ type:'game', data: 1 }));
-				game.messageStack.push(JSON.stringify({ type:'sound', data: 9 }));
-				
-
-			} else if (strMessage.indexOf("a_") === 0 && userName !== false) {
-				game.gameInput(this.entityindex, strMessage);
-            } else { // log and broadcast the message
-				if (game.avatar[this.entityindex] === undefined){
-					var msgObj = game.spawn.Message(userName, userColor, strMessage);
-				}else{
-					var msgObj = game.spawn.Message(userName, userColor, strMessage, game.avatar[this.entityindex].xpos, game.avatar[this.entityindex].ypos);
+	if (request.origin == "http://deekiki.com" || request.origin == "http://www.deekiki.com"){
+		var connection = request.accept(null, request.origin);
+		// we need to know client index to remove them on 'close' event
+		var index = game.clients.push(connection) - 1;
+		var entityindex;
+		var userName = false;
+		var userColor = false;
+	
+		console.log((new Date()) + ' Connection accepted.');
+		// send back chat history
+		if (game.history.length > 0) {
+			connection.sendUTF(JSON.stringify( { type: 'history', data: game.history} ));
+		}
+	
+		// user sent some message
+		connection.on('message', function(message) {
+			if (message.type === 'utf8') { // accept only text
+				var strMessage = game.htmlEntities(message.utf8Data)
+				if (userName === false) { // first message sent by user is their name
+					// remember user name
+					userName = strMessage;
+					userColor = game.colors.shift();
+					
+					connection.sendUTF(JSON.stringify({ type:'color', data: userColor }));
+					console.log('#### User is known as: ' + userName + ' with ' + userColor + ' color.');
+	
+					//add glum and move it to position
+					var entityobj = game.spawn.Glum(userName, userColor, index);
+					//game.ai.Glum(entityobj);
+					game.messageStack.push(JSON.stringify({ type:'sound', data: 9 }));
+					
+					this.entityindex = game.avatar.push(entityobj) - 1;
+					this.score = 0;
+					
+				} else if (strMessage === "restart" && userName !== false) {
+	
+					//add glum and move it to position
+					var entityobj = game.spawn.Glum(userName, userColor, index);
+					game.ai.Glum(entityobj);
+					this.entityindex = game.avatar.push(entityobj) - 1;
+					this.score = 0;
+					
+					connection.sendUTF(JSON.stringify({ type:'game', data: 1 }));
+					game.messageStack.push(JSON.stringify({ type:'sound', data: 9 }));
+					
+	
+				} else if (strMessage.indexOf("a_") === 0 && userName !== false) {
+					game.gameInput(this.entityindex, strMessage);
+				} else { // log and broadcast the message
+					if (game.avatar[this.entityindex] === undefined){
+						var msgObj = game.spawn.Message(userName, userColor, strMessage);
+					}else{
+						var msgObj = game.spawn.Message(userName, userColor, strMessage, game.avatar[this.entityindex].xpos, game.avatar[this.entityindex].ypos);
+					}
+					game.history.push(msgObj);
+					console.log('### '+game.history[game.history.length-1].text+' ' + game.history[game.history.length-1].xpos, + ' ' + game.history[game.history.length-1].ypos);
+					game.history = game.history.slice(-22);
+					
+					// broadcast message to all connected clients
+					game.messageStack.push(JSON.stringify({ type:'message', data:msgObj }));
 				}
-                game.history.push(msgObj);
-                console.log('### '+game.history[game.history.length-1].text+' ' + game.history[game.history.length-1].xpos, + ' ' + game.history[game.history.length-1].ypos);
-                game.history = game.history.slice(-22);
-				
-                // broadcast message to all connected clients
-				game.messageStack.push(JSON.stringify({ type:'message', data:msgObj }));
-            }
-        }
-    });
+			}
+		});
 
-    // user disconnected
-    connection.on('close', function(connection) {
-        if (userName !== false && userColor !== false) {
-					console.log((new Date()) + " Peer "	+ connection.remoteAddress + " disconnected. "+index);
+		// user disconnected
+		connection.on('close', function(connection) {
+			if (userName !== false && userColor !== false) {
+				console.log((new Date()) + " Peer "	+ this.remoteAddress + " disconnected. "+index);
 
-					// remove user from the list of connected clients
-					game.avatar.splice(index, 1);
+				// remove user from the list of connected clients
+				game.avatar.splice(index, 1);
 
-					// remove user from the list of connected clients
-					game.clients.splice(index, 1);
-			// push back user's color to be reused by another user
-			game.colors.push(userColor);
-        }
-    });
+				// remove user from the list of connected clients
+				game.clients.splice(index, 1);
+				// push back user's color to be reused by another user
+				game.colors.push(userColor);
+			}
+		});
+	}
 	
 
 });
@@ -170,7 +172,7 @@ setInterval(function() {
 				game.missileTrash.push(i);
 			} else {
 				var collision = game.overlap(game.missile[i].xpos, game.missile[i].ypos, game.missile[i].size, 10, i, "missile", "npc");
-				if (collision > -1 && game.missile[i].client > -1){
+				if (collision > -1 && game.missile[i].client > -1 && game.clients[game.missile[i].client] !== undefined){
 					game.clients[game.missile[i].client].score += 1000;
 					game.clients[game.missile[i].client].sendUTF(JSON.stringify({ type:'score', data: game.clients[game.missile[i].client].score }));
 					game.npcTrash.push(collision);
