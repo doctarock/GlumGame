@@ -1,13 +1,12 @@
 // SPAWNERS ------------------------------------------------------------------------------------------------ SPAWNERS //
 module.exports = {
-  Glum: function (userName, userColor, index) {
+  Glum: function (userName, userColor) {
 
 					 var entityobj = {
 						xpos: Math.floor((Math.random()*480)+10),
 						ypos: Math.floor((Math.random()*480)+10),
 						name: userName,
 						color: userColor,
-						client: index,
 						health: 100,
 						xdir: 0,
 						ydir: 0,

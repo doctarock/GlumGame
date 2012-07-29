@@ -56,8 +56,8 @@ module.exports = {
 					}
 				}
 				if (objEntity.mode === 2){
-					objEntity.ticker -= 20;
-					if(objEntity.ticker === 0){
+					objEntity.ticker -= 25;
+					if(objEntity.ticker <= 0){
 						objEntity.mode = 1;
 						objEntity.ticker = 50;
 					}
